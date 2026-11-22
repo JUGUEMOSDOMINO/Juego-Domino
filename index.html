@@ -1,1 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0d633b">
+    <link rel="apple-touch-icon" href="./icon-512.png?v=5">
+    <title>JUGUEMOS DOMINÓ · Plataforma de Juego</title>
+    <link rel="stylesheet" href="mesa-domino.css?v=8">
+</head>
+<body>
 
+    <!-- Modal de Bienvenida / Registro de Alias -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content login-card">
+            <div class="modal-badge">NORMATIVA FED · POR PAREJAS</div>
+            <h2>🁣 MESA DE DOMINÓ</h2>
+            <p class="modal-subtitle">Configura tu asiento y modalidad de partida</p>
+            <div class="input-group">
+                <label for="player-alias">Tu Nombre o Apodo <span class="req">*</span></label>
+                <input type="text" id="player-alias" placeholder="Ej. Carlos, Li, JC..." maxlength="18" required>
+            </div>
+            <div class="input-group">
+                <label for="player-club">Ciudad o Peña <span class="opt">(Opcional)</span></label>
+                <input type="text" id="player-club" placeholder="Ej. València, Club Turia..." maxlength="20">
+            </div>
+            <div class="input-group">
+                <label>Modalidad de Partida</label>
+                <div class="target-selector" id="target-selector">
+                    <button type="button" class="target-opt" data-target="200">200 tantos · Rápida</button>
+                    <button type="button" class="target-opt active" data-target="300">300 tantos · Oficial</button>
+                </div>
+            </div>
+            <button id="btn-start-game" class="btn-primary-gold">Entrar a la Mesa</button>
+        </div>
+    </div>
+
+    <!-- Modal Resumen de Mano (con botón para iniciar la siguiente) -->
+    <div id="hand-summary-modal" class="modal hidden">
+        <div class="modal-content summary-card">
+            <h2 id="summary-title">Resultado de la Mano</h2>
+            <div id="summary-detail" class="summary-detail-box"></div>
+            <div id="summary-scores" class="summary-scores-box"></div>
+            <button id="btn-next-hand" class="btn-primary-gold">▶ Jugar Siguiente Mano</button>
+        </div>
+    </div>
+
+    <!-- Modal Top 10 Jugadores -->
+    <div id="ranking-modal" class="modal hidden">
+        <div class="modal-content ranking-box">
+            <h2>🏆 Top 10 Jugadores</h2>
+            <table id="ranking-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Jugador</th>
+                        <th>Ganadas</th>
+                        <th>Puntos</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-body"></tbody>
+            </table>
+            <button id="btn-close-ranking" class="btn-primary-gold">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Barra Superior de Información -->
+    <header class="top-bar">
+        <div class="scoreboard">
+            <div class="team us">
+                <span class="team-name">NOSOTROS (<span id="lbl-user-name">Tú</span> & <span id="lbl-partner-name">Eduardo</span>)</span>
+                <span class="score" id="score-us">0</span>
+            </div>
+            <div class="target-score" id="lbl-target-score">Meta: 300</div>
+            <div class="team them">
+                <span class="team-name">RIVALES (<span id="lbl-rivals-names">Jesús & Gaby</span>)</span>
+                <span class="score" id="score-them">0</span>
+            </div>
+        </div>
+        <div class="controls">
+            <div id="timer-box" class="timer">Tiempo: <span id="timer-val">20</span>s</div>
+            <button id="btn-toggle-sound" class="btn-secondary" title="Activar/Silenciar sonido">🔊</button>
+            <button id="btn-show-ranking" class="btn-secondary">🏆 Top 10</button>
+            <button id="btn-new-match" class="btn-secondary">Reiniciar</button>
+        </div>
+    </header>
+
+    <!-- Mesa de Dominó -->
+    <main class="table-container">
+        <!-- Compañero (Jugador 3 - Arriba) -->
+        <div class="player-zone top-zone">
+            <div class="player-badge">
+                <span class="p-name" id="name-p2">Eduardo (Compañero)</span>
+                <span class="p-cards" id="count-p2">7 fichas</span>
+                <span class="thought-bubble" id="thought-p2"></span>
+            </div>
+            <div class="bot-hand horizontal" id="hand-p2"></div>
+        </div>
+
+        <!-- Zona Central: Rival Izquierda (J4), Tablero (Carro), Rival Derecha (J2) -->
+        <div class="middle-row">
+            <div class="player-zone left-zone">
+                <div class="player-badge">
+                    <span class="p-name" id="name-p3">Gaby (Izq)</span>
+                    <span class="p-cards" id="count-p3">7 fichas</span>
+                    <span class="thought-bubble" id="thought-p3"></span>
+                </div>
+                <div class="bot-hand vertical" id="hand-p3"></div>
+            </div>
+
+            <div class="board-area" id="board-area">
+                <div id="game-log" class="game-log"><div>¡Comienza la partida!</div></div>
+                <div id="carro-container" class="carro-container"></div>
+                <div id="side-selector" class="side-selector hidden">
+                    <span>¿Por qué extremo jugar?</span>
+                    <button id="btn-play-left">Izquierda (<span id="val-left"></span>)</button>
+                    <button id="btn-play-right">Derecha (<span id="val-right"></span>)</button>
+                </div>
+            </div>
+
+            <div class="player-zone right-zone">
+                <div class="player-badge">
+                    <span class="p-name" id="name-p1">Jesús (Der)</span>
+                    <span class="p-cards" id="count-p1">7 fichas</span>
+                    <span class="thought-bubble" id="thought-p1"></span>
+                </div>
+                <div class="bot-hand vertical" id="hand-p1"></div>
+            </div>
+        </div>
+
+        <!-- Jugador Humano (Jugador 1 - Abajo) -->
+        <div class="player-zone bottom-zone">
+            <div class="player-badge user-badge">
+                <span class="p-name" id="badge-user-name">Tú (Jugador)</span>
+                <span class="thought-bubble" id="thought-p0"></span>
+                <button id="btn-pass" class="btn-pass hidden">PASO</button>
+            </div>
+            <div class="user-hand" id="hand-p0"></div>
+        </div>
+    </main>
+
+    <script src="mesa-domino.js?v=15"></script>
+</body>
+</html>
